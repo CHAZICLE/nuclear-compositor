@@ -24,10 +24,10 @@ GLuint load_shader(GLint type, const char *shader_path)
 	long fsize = ftell(fs);
 	fseek(fs, 0, SEEK_SET);
 	char *shader_code = malloc(fsize+1);
+	shader_code[fsize] = 0;
 	fread(shader_code, fsize, 1, fs);
 	glShaderSource(shaderId, 1, (const char *const *)&shader_code , NULL);
 	glCompileShader(shaderId);
-	free(shader_code);
 	fclose(fs);
 
 	GLint Result = GL_FALSE;
@@ -35,15 +35,15 @@ GLuint load_shader(GLint type, const char *shader_path)
 
 	glGetShaderiv(shaderId, GL_COMPILE_STATUS, &Result);
 	glGetShaderiv(shaderId, GL_INFO_LOG_LENGTH, &InfoLogLength);
-	fprintf(stderr, "IL:%d", InfoLogLength);
 	if ( InfoLogLength > 0 ){
 		char *err = malloc(InfoLogLength+1);
 		glGetShaderInfoLog(shaderId, InfoLogLength, NULL, &err[0]);
-		printf("%s\n", err);
+		printf("Failed to compile shader %s: %s\n%s\n", shader_path, err, shader_code);
 		exit(1);
 	}
 	if(!Result)
 		exit(2);
+	free(shader_code);
 
 	return shaderId;
 }
@@ -69,7 +69,7 @@ GLuint loadShaders(const char *vertexShaderName, const char *fragmentShaderName)
 	if ( InfoLogLength > 0 ){
 		char *err = malloc(InfoLogLength+1);
 		glGetProgramInfoLog(ProgramID, InfoLogLength, NULL, &err[0]);
-		fprintf(stderr, "%s\n", err);
+		fprintf(stderr, "Failed to link shader program (%s, %s): %s\n", vertexShaderName, fragmentShaderName, err);
 		exit(1);
 	}
 	if(!Result)

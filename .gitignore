@@ -1,3 +1,4 @@
 nuclear-compositor
 bin
 .depend
+.*.s**

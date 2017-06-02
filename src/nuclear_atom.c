@@ -18,7 +18,7 @@ void nuclear_atom_init(nuclear_atom *atm, nuclear_universe *unv, int x, int y, i
 
 	wl_list_init(&atm->levels);
 	nuclear_level *level = malloc(sizeof(nuclear_level)*3);
-	for(int i=0;i<3;i++)
+	for(int i=0;i<1;i++)
 	{
 		nuclear_level_init(&level[i], atm, 20.f+5.f*(i+1));
 		wl_list_insert(&atm->levels, &level[i].link);

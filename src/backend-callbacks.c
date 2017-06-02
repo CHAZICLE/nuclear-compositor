@@ -75,6 +75,7 @@ float vax = 1.f;
 		{ \
 			if(state==1) \
 			{ \
+				fprintf(stderr, "Key %d is down", (k)); \
 				(ctl) = true; \
 			} \
 			else if(state==0) \
@@ -195,7 +196,7 @@ void do_backend_render(nuclear_server *srv)
 	}
 }
 void handle_modifiers_changed(nuclear_server *srv, struct modifier_state new_state) {
-	//printf("PTRS: srv=%p new_state=%p\n", srv, &new_state);
+	fprintf(stderr, "handle_modifiers_changed: srv=%p new_state=%p\n", srv, &new_state);
 	//puts("YO");
 	//if (new_state.depressed == srv->modifier_state.depressed && new_state.latched == srv->modifier_state.latched && new_state.locked == srv->modifier_state.locked && new_state.group == srv->modifier_state.group)
 	//	return;
