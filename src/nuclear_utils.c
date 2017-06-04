@@ -7,12 +7,14 @@
 PFNEGLBINDWAYLANDDISPLAYWL eglBindWaylandDisplayWL = 0;
 PFNEGLQUERYWAYLANDBUFFERWL eglQueryWaylandBufferWL = 0;
 PFNGLEGLIMAGETARGETTEXTURE2DOESPROC c_glEGLImageTargetTexture2DOES = 0;
+PFNEGLGETPLATFORMDISPLAYEXTPROC eglGetPlatformDisplayEXT = 0;
 
 void init_egl()
 {
 	eglBindWaylandDisplayWL = (PFNEGLBINDWAYLANDDISPLAYWL) eglGetProcAddress ("eglBindWaylandDisplayWL");
 	eglQueryWaylandBufferWL = (PFNEGLQUERYWAYLANDBUFFERWL) eglGetProcAddress ("eglQueryWaylandBufferWL");
 	c_glEGLImageTargetTexture2DOES = (PFNGLEGLIMAGETARGETTEXTURE2DOESPROC) eglGetProcAddress ("glEGLImageTargetTexture2DOES");
+	eglGetPlatformDisplayEXT = (PFNEGLGETPLATFORMDISPLAYEXTPROC)eglGetProcAddress("eglGetPlatformDisplayEXT");
 }
 
 GLuint load_shader(GLint type, const char *shader_path)
@@ -38,11 +40,14 @@ GLuint load_shader(GLint type, const char *shader_path)
 	if ( InfoLogLength > 0 ){
 		char *err = malloc(InfoLogLength+1);
 		glGetShaderInfoLog(shaderId, InfoLogLength, NULL, &err[0]);
-		printf("Failed to compile shader %s: %s\n%s\n", shader_path, err, shader_code);
+		fprintf(stderr, "Failed to compile shader %s: \"%s\"\n%s\n", shader_path, err, shader_code);
 		exit(1);
 	}
 	if(!Result)
+	{
+		fprintf(stderr, "Failed to compile shader %s: \n%s\n", shader_path, shader_code);
 		exit(2);
+	}
 	free(shader_code);
 
 	return shaderId;
