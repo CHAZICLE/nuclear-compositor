@@ -47,29 +47,29 @@ void nuclear_texture_create_from_file(nuclear_texture *texture, const char *file
 }
 void nuclear_texture_draw(nuclear_texture *texture, int x, int y)
 {
-	if (!texture->identifier) return;
-	
-	GLfloat vertices[] = {
-		x, y,
-		x+texture->width, y,
-		x+texture->width, y+texture->height,
-		x, y+texture->height
-	};
-	GLint tex_coords[] = {
-		0, 0,
-		1, 0,
-		1, 1,
-		0, 1
-	};
-	
-	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, texture->identifier);
-	//glVertexPointer(2, GL_FLOAT, 0, vertices);
-	//glTexCoordPointer(2, GL_FLOAT, 0, tex_coords);
-	
-	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-	
-	glBindTexture(GL_TEXTURE_2D, 0);
+	//if (!texture->identifier) return;
+	//
+	//GLfloat vertices[] = {
+	//	x, y,
+	//	x+texture->width, y,
+	//	x+texture->width, y+texture->height,
+	//	x, y+texture->height
+	//};
+	//GLint tex_coords[] = {
+	//	0, 0,
+	//	1, 0,
+	//	1, 1,
+	//	0, 1
+	//};
+	//
+	//glEnable(GL_TEXTURE_2D);
+	//glBindTexture(GL_TEXTURE_2D, texture->identifier);
+	////glVertexPointer(2, GL_FLOAT, 0, vertices);
+	////glTexCoordPointer(2, GL_FLOAT, 0, tex_coords);
+	//
+	//glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+	//
+	//glBindTexture(GL_TEXTURE_2D, 0);
 }
 void nuclear_texture_delete(nuclear_texture* texture)
 {

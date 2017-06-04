@@ -10,7 +10,7 @@ void nuclear_pointer_set_cursor(struct wl_client *client,
 	   int32_t hotspot_x,
 	   int32_t hotspot_y)
 {
-	nuclear_surface *ns = wl_resource_get_user_data (surface);
+	//nuclear_surface *ns = wl_resource_get_user_data (surface);
 	//srv->cursor = ns;
 }
 
@@ -52,7 +52,7 @@ void nuclear_seat_get_keyboard(struct wl_client *client,
 	     uint32_t id)
 {
 	struct wl_resource *keyboard = wl_resource_create (client, &wl_keyboard_interface, 1, id);
-	//wl_resource_set_implementation (keyboard, &keyboard_interface, NULL, NULL);
+	wl_resource_set_implementation (keyboard, &nuclear_keyboard_interface, NULL, NULL);
 	//get_client(client)->keyboard = keyboard;
 	//int fd, size;
 	//backend_get_keymap (&fd, &size);
