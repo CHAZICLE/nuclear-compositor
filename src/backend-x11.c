@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <poll.h>
 #include "nuclear_utils.h"
+#include <X11/Xcursor/Xcursor.h>
 
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 600
@@ -129,7 +130,14 @@ static void create_window(void) {
 	XMapWindow (x_display, window.window);
 
 	fprintf(stderr, "GL Version: %s\n", glGetString(GL_VERSION));
-	XDefineCursor(x_display, window.window, 0);
+	
+	Cursor cursor;
+	XcursorImage* native = XcursorImageCreate(16, 16);
+	memset(native->pixels, 16*16, sizeof(unsigned int));
+	cursor = XcursorImageLoadCursor(x_display, native);
+	XcursorImageDestroy(native);
+
+	XDefineCursor(x_display, window.window, cursor);
 }
 
 void backend_init (struct backend_callbacks *_callbacks, nuclear_server *srv) {
@@ -177,6 +185,7 @@ void backend_dispatch_nonblocking (void) {
 		if (event.type == ConfigureNotify) {
 			window_width = event.xconfigure.width;
 			window_height = event.xconfigure.height;
+			XWarpPointer(x_display, 0, window.window, 0,0, 0, 0, window_width/2, window_height/2);
 			callbacks.resize (callbacks.srv, event.xconfigure.width, event.xconfigure.height);
 		}
 		else if (event.type == Expose) {
