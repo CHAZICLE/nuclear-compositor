@@ -28,6 +28,11 @@ extern PFNEGLQUERYWAYLANDBUFFERWL eglQueryWaylandBufferWL;
 extern PFNGLEGLIMAGETARGETTEXTURE2DOESPROC c_glEGLImageTargetTexture2DOES;
 extern PFNEGLGETPLATFORMDISPLAYEXTPROC eglGetPlatformDisplayEXT;
 
+void print_eglversion(EGLDisplay display);
+void print_glversion();
+void print_eglerror(const char *err);
+void print_glerror(const char *err);
+
 GLuint loadShaders(const char *vertexShaderName, const char *fragmentShaderName);
 
 #endif

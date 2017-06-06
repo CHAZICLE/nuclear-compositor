@@ -32,52 +32,24 @@ static int32_t keyboard_device_id;
 static struct xkb_keymap *keymap;
 static struct xkb_state *state;
 
-void print_version(EGLDisplay display)
-{
-	fprintf(stderr, "print_version (%d):\n\tEGL_CLIENT_APIS: %s\n", display, eglQueryString(display, EGL_CLIENT_APIS));
-	fprintf(stderr, "\tEGL_VENDOR: %s\n", eglQueryString(display, EGL_VENDOR));
-	fprintf(stderr, "\tEGL_VERSION: %s\n", eglQueryString(display, EGL_VERSION));
-	fprintf(stderr, "\tEGL_EXTENSIONS: %s\n", eglQueryString(display, EGL_EXTENSIONS));
-}
-void print_error(const char *err)
-{
-	switch(eglGetError())
-	{
-		case EGL_SUCCESS: fprintf(stderr, "Error: (EGL_SUCCESS): %s\n", err); break;
-		case EGL_NOT_INITIALIZED: fprintf(stderr, "Error: (EGL_NOT_INITIALIZED): %s\n", err); break;
-		case EGL_BAD_ACCESS: fprintf(stderr, "Error: (EGL_BAD_ACCESS): %s\n", err); break;
-		case EGL_BAD_ALLOC: fprintf(stderr, "Error: (EGL_BAD_ALLOC): %s\n", err); break;
-		case EGL_BAD_ATTRIBUTE: fprintf(stderr, "Error: (EGL_BAD_ATTRIBUTE): %s\n", err); break;
-		case EGL_BAD_CONTEXT: fprintf(stderr, "Error: (EGL_BAD_CONTEXT): %s\n", err); break;
-		case EGL_BAD_CONFIG: fprintf(stderr, "Error: (EGL_BAD_CONFIG): %s\n", err); break;
-		case EGL_BAD_CURRENT_SURFACE: fprintf(stderr, "Error: (EGL_BAD_CURRENT_SURFACE): %s\n", err); break;
-		case EGL_BAD_DISPLAY: fprintf(stderr, "Error: (EGL_BAD_DISPLAY): %s\n", err); break;
-		case EGL_BAD_SURFACE: fprintf(stderr, "Error: (EGL_BAD_SURFACE): %s\n", err); break;
-		case EGL_BAD_MATCH: fprintf(stderr, "Error: (EGL_BAD_MATCH): %s\n", err); break;
-		case EGL_BAD_PARAMETER: fprintf(stderr, "Error: (EGL_BAD_PARAMETER): %s\n", err); break;
-		case EGL_BAD_NATIVE_PIXMAP: fprintf(stderr, "Error: (EGL_BAD_NATIVE_PIXMAP): %s\n", err); break;
-		case EGL_BAD_NATIVE_WINDOW: fprintf(stderr, "Error: (EGL_BAD_NATIVE_WINDOW): %s\n", err); break;
-		case EGL_CONTEXT_LOST: fprintf(stderr, "Error: (EGL_CONTEXT_LOST): %s\n", err); break;
-	}
-}
-
 static void create_egl_window(void)
 {
-	print_version(EGL_NO_DISPLAY);
-	window.egl_display = eglGetDisplay(x_display);
+	print_eglversion(EGL_NO_DISPLAY);
+
+	//window.egl_display = eglGetDisplay(x_display);
+	window.egl_display = eglGetPlatformDisplay(EGL_PLATFORM_X11_EXT, x_display, NULL);
 	if(window.egl_display==EGL_NO_DISPLAY)
 	{
 		fprintf(stderr, "NO DISPLAY\n");
 		exit(1);
 	}
-	print_version(window.egl_display);
 	EGLint major,minor;
 	if(eglInitialize(window.egl_display, &major, &minor)!=EGL_TRUE)
 	{
-		print_error("EGL init failed");
+		print_eglerror("EGL init failed");
 		exit(1);
 	}
-	print_version(window.egl_display);
+	print_eglversion(window.egl_display);
 
 	// Setup EGL
 	EGLint egl_attribs[] = {
@@ -91,17 +63,15 @@ static void create_egl_window(void)
 	EGLint num_configs_returned;
 	if(eglChooseConfig(window.egl_display, egl_attribs, &egl_config, 1, &num_configs_returned)!=GL_TRUE)
 	{
-		print_error("eglChooseConfig failed");
+		print_eglerror("eglChooseConfig failed");
 		exit(1);
 	}
 
-	print_version(window.egl_display);
-	
 	// Get the visual from the EGL config
 	EGLint visual_id;
 	if(eglGetConfigAttrib(window.egl_display, egl_config, EGL_NATIVE_VISUAL_ID, &visual_id)!=GL_TRUE)
 	{
-		print_error("eglGetConfigAttrib failed");
+		print_eglerror("eglGetConfigAttrib failed");
 		exit(1);
 	}
 	XVisualInfo visual_template;
@@ -128,37 +98,42 @@ static void create_egl_window(void)
 
 	static const EGLint eglContextAttribs[] = {
 		//EGL_CONTEXT_MAJOR_VERSION, 3,
-		//EGL_CONTEXT_MINOR_VERSION, 2,
+		//EGL_CONTEXT_MINOR_VERSION, 1,
 		EGL_CONTEXT_MAJOR_VERSION, 2,
 		EGL_CONTEXT_MINOR_VERSION, 0,
 		EGL_NONE
 	};
 	
 	// EGL context and surface
-	eglBindAPI(EGL_OPENGL_ES3_BIT);
+	if(eglBindAPI(EGL_OPENGL_ES_API)==EGL_FALSE)
+	{
+		print_eglerror("Failed to bind api");
+		exit(1);
+	}
 	window.egl_context = eglCreateContext(window.egl_display, egl_config, EGL_NO_CONTEXT, eglContextAttribs);
 	if(window.egl_context==EGL_NO_CONTEXT)
 	{
-		print_error("eglCreateContext failed");
+		print_eglerror("eglCreateContext failed");
 		exit(1);
 	}
 	window.egl_surface = eglCreateWindowSurface(window.egl_display, egl_config, window.window, NULL);
 	if(window.egl_surface==EGL_NO_SURFACE)
 	{
-		print_error("eglCreateWindowSurface failed");
+		print_eglerror("eglCreateWindowSurface failed");
 		exit(1);
 	}
 	if(eglMakeCurrent(window.egl_display, window.egl_surface, window.egl_surface, window.egl_context)!=GL_TRUE)
 	{
-		print_error("eglMakeCurrent failed");
+		print_eglerror("eglMakeCurrent failed");
 		exit(1);
 	}
 
 	XFree(visual);
 	XMapWindow (x_display, window.window);
 
-	fprintf(stderr, "GL Version: %s\n", glGetString(GL_VERSION));
 	XDefineCursor(x_display, window.window, 0);
+
+	print_glversion();
 }
 
 void backend_init (struct backend_callbacks *_callbacks, nuclear_server *srv) {
