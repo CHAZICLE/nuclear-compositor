@@ -4,7 +4,6 @@
 #include "backend-callbacks.h"
 
 static int window_active = 1;
-static int lastX = 0,lastY = 0;
 
 void handle_resize_event(nuclear_server *srv, int width, int height) {
 	glViewport (0, 0, width, height);
@@ -19,14 +18,14 @@ void handle_resize_event(nuclear_server *srv, int width, int height) {
 void handle_draw_event (nuclear_server *srv) {
 	srv->redraw = 1;
 }
-float vin = 200.f;
+float vin = 100.f;
 void handle_mouse_motion_event (nuclear_server *srv, int dx, int dy)
 {
-	//fprintf(stderr, "Mouse: (%d, %d)\n", dx, dy);
+	fprintf(stderr, "handle_mouse_motion_event: (%d, %d)\n", dx, dy);
 	if(window_active)
 	{
-		srv->active_universe->pitch -= dy/(180/3.14)/(backend_get_timestamp()/1000)*vin;
-		srv->active_universe->yaw += dx/(180/3.14)/(backend_get_timestamp()/1000)*vin;
+		srv->active_universe->pitch -= dy/(180/3.14)/((float)backend_get_timestamp()/1000)*vin;
+		srv->active_universe->yaw += dx/(180/3.14)/((float)backend_get_timestamp()/1000)*vin;
 	}
 	srv->redraw = 1;
 	
@@ -68,14 +67,12 @@ void handle_mouse_button_event (nuclear_server *srv, int button, int state) {
 	//if (!srv->pointer_surface || !srv->pointer_surface->client->pointer) return;
 	//wl_pointer_send_button (srv->pointer_surface->client->pointer, 0, backend_get_timestamp(), button, state);
 }
-float vax = 1.f;
 
 #define SETUPKEY(k,ctl) do { \
 		if(key==(k)) \
 		{ \
 			if(state==1) \
 			{ \
-				fprintf(stderr, "Key %d is down", (k)); \
 				(ctl) = true; \
 			} \
 			else if(state==0) \
@@ -84,8 +81,9 @@ float vax = 1.f;
 			} \
 		} \
 	} while(0);
-bool ctl_left,ctl_right,ctl_up,ctl_down,ctl_forward,ctl_backward;
+bool ctl_left,ctl_right,ctl_up,ctl_down,ctl_forward,ctl_backward,ctl_speed;
 void handle_key_event (nuclear_server *srv, int key, int state) {
+	fprintf(stderr, "handle_key_event: key=%d state=%d\n", key, state);
 	//if (!srv->active_surface || !srv->active_surface->client->keyboard) return;
 	//wl_keyboard_send_key (srv->active_surface->client->keyboard, 0, backend_get_timestamp(), key, state);
 	SETUPKEY(30, ctl_left)//left
@@ -94,109 +92,55 @@ void handle_key_event (nuclear_server *srv, int key, int state) {
 	SETUPKEY(16, ctl_down)//up
 	SETUPKEY(17, ctl_forward)//forward
 	SETUPKEY(31, ctl_backward)//back
-
-	fprintf(stderr, "Key: %d, State:%d CTLL:%d\n", key, state, ctl_left);
 }
+#define GET_forward vec3 forward = { \
+			cos(unv->pitch) * sin(unv->yaw), \
+			cos(unv->pitch) * cos(unv->yaw), \
+			sin(unv->pitch) \
+		};
+#define GET_right vec3 right = { \
+			sin(unv->yaw + 3.14f/2.0f), \
+			cos(unv->yaw + 3.14f/2.0f), \
+			0, \
+		};
+#define GET_up vec3 up; \
+		GET_forward \
+		GET_right \
+		vec3_mul_cross(up, right, forward);
+#define ADDCTL(ctl, op, vec) if(ctl_##ctl) \
+	{ \
+		GET_##vec \
+		vec3_scale(vec, vec, vax); \
+		vec3_##op(srv->active_universe->floating_position, srv->active_universe->floating_position, vec); \
+		srv->redraw = 1; \
+	}
+float vax = 1.f;
 void do_backend_render(nuclear_server *srv)
 {
+	fprintf(stderr, "do_backend_render\n");
 	nuclear_universe *unv = srv->active_universe;
-	if(ctl_left)//left
-	{
-		vec3 direction = {
-			cos(unv->pitch) * sin(unv->yaw),
-			cos(unv->pitch) * cos(unv->yaw),
-			sin(unv->pitch)
-		};
-		vec3 right = {
-			sin(unv->yaw + 3.14f/2.0f),
-			cos(unv->yaw + 3.14f/2.0f),
-			0,
-		};
-
-		vec3_sub(srv->active_universe->floating_position, srv->active_universe->floating_position, right);
-		srv->redraw = 1;
-	}
-	if(ctl_right)//right
-	{
-		vec3 direction = {
-			cos(unv->pitch) * sin(unv->yaw),
-			cos(unv->pitch) * cos(unv->yaw),
-			sin(unv->pitch)
-		};
-		vec3 right = {
-			sin(unv->yaw + 3.14f/2.0f),
-			cos(unv->yaw + 3.14f/2.0f),
-			0,
-		};
-
-		vec3_add(srv->active_universe->floating_position, srv->active_universe->floating_position, right);
-		srv->redraw = 1;
-	}
-	if(ctl_up)//up
-	{
-		vec3 direction = {
-			cos(unv->pitch) * sin(unv->yaw),
-			cos(unv->pitch) * cos(unv->yaw),
-			sin(unv->pitch)
-		};
-		vec3 right = {
-			sin(unv->yaw + 3.14f/2.0f),
-			cos(unv->yaw + 3.14f/2.0f),
-			0,
-		};
-		vec3 up;
-		vec3_mul_cross(up, right, direction);
-
-		vec3_add(srv->active_universe->floating_position, srv->active_universe->floating_position, up);
-		srv->redraw = 1;
-	}
-	if(ctl_down)//down
-	{
-		vec3 direction = {
-			cos(unv->pitch) * sin(unv->yaw),
-			cos(unv->pitch) * cos(unv->yaw),
-			sin(unv->pitch)
-		};
-		vec3 right = {
-			sin(unv->yaw + 3.14f/2.0f),
-			cos(unv->yaw + 3.14f/2.0f),
-			0,
-		};
-		vec3 up;
-		vec3_mul_cross(up, right, direction);
-
-		vec3_sub(srv->active_universe->floating_position, srv->active_universe->floating_position, up);
-		srv->redraw = 1;
-	}
-	if(ctl_forward)//forward
-	{
-		vec3 direction = {
-			cos(unv->pitch) * sin(unv->yaw),
-			cos(unv->pitch) * cos(unv->yaw),
-			sin(unv->pitch)
-		};
-		vec3 right = {
-			sin(unv->yaw + 3.14f/2.0f),
-			cos(unv->yaw + 3.14f/2.0f),
-			0,
-		};
-
-		vec3_add(srv->active_universe->floating_position, srv->active_universe->floating_position, direction);
-		srv->redraw = 1;
-	}
-	if(ctl_backward)//back
-	{
-		vec3 direction = {
-			cos(unv->pitch) * sin(unv->yaw),
-			cos(unv->pitch) * cos(unv->yaw),
-			sin(unv->pitch)
-		};
-		vec3_sub(srv->active_universe->floating_position, srv->active_universe->floating_position, direction);
-		srv->redraw = 1;
-	}
+	ADDCTL(right,add,right)
+	ADDCTL(left,sub,right)
+	ADDCTL(up,add,up)
+	ADDCTL(down,sub,up)
+	ADDCTL(forward,add,forward)
+	ADDCTL(backward,sub,forward)
 }
 void handle_modifiers_changed(nuclear_server *srv, struct modifier_state new_state) {
-	fprintf(stderr, "handle_modifiers_changed: srv=%p new_state=%p\n", srv, &new_state);
+	fprintf(stderr, "handle_modifiers_changed: group=%d, locked=%d, latched=%d, depressed=%d\n",
+			new_state.group,
+			new_state.locked,
+			new_state.latched,
+			new_state.depressed
+			);
+	if(new_state.depressed&1)
+	{
+		vax = 5.f;
+	}
+	else
+	{
+		vax = 1.f;
+	}
 	//puts("YO");
 	//if (new_state.depressed == srv->modifier_state.depressed && new_state.latched == srv->modifier_state.latched && new_state.locked == srv->modifier_state.locked && new_state.group == srv->modifier_state.group)
 	//	return;

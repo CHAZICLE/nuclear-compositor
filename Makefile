@@ -13,8 +13,8 @@ CCBINDIR=$(BINDIR)
 CCDEPDIR=$(DEPDIR)
 
 CC=gcc
-CFLAGS=-g -fdiagnostics-color -I include/linmath.h
-LDFLAGS=-lwayland-server -lX11 -lX11-xcb -lGLESv2 -lEGL -lxkbcommon-x11 -lxkbcommon -lm
+CFLAGS=-g -Wall -fdiagnostics-color -I include/linmath.h
+LDFLAGS=-lwayland-server -lX11 -lXcursor -lX11-xcb -lGLESv2 -lEGL -lxkbcommon-x11 -lxkbcommon -lm
 CCBIN=nuclear-compositor
 
 CCSRCS = $(shell find $(CCSRCDIR) -type f -name '*.c')

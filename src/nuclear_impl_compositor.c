@@ -5,40 +5,6 @@
 
 #include "nuclear_impl_compositor.h"
 
-// wl compositor
-void nuclear_impl_compositor_bind(struct wl_client *client, void *data, uint32_t version, uint32_t id)
-{
-	struct wl_resource *resource = wl_resource_create (client, &wl_compositor_interface, 1, id);
-	wl_resource_set_implementation (resource, &nuclear_impl_compositor_interface, NULL, NULL);
-}
-static struct wl_compositor_interface nuclear_impl_compositor_interface = {
-	&nuclear_impl_compositor_create_surface,
-	&nuclear_impl_compositor_create_region,
-};
-static void nuclear_impl_compositor_create_surface(struct wl_client *client,
-		       struct wl_resource *resource,
-		       uint32_t id)
-{
-	//printf("nuclear_compositor_create_surface\n");
-	//nuclear_surface *surface = calloc(1, sizeof(nuclear_surface));
-	//surface->surface = wl_resource_create (client, &wl_surface_interface, 3, id);
-	//wl_resource_set_implementation (surface->surface, &nuclear_impl_surface_interface, surface, &nuclear_impl_compositor_delete_surface);
-	//surface->client = get_client (client);
-	//wl_list_insert (&surfaces, &surface->link);
-}
-static void nuclear_impl_compositor_create_region(struct wl_client *client,
-		      struct wl_resource *resource,
-		      uint32_t id)
-{
-	printf("nuclear_compositor_create_region\n");
-	struct wl_resource *region = wl_resource_create (client, &wl_region_interface, 1, id);
-	wl_resource_set_implementation (region, &nuclear_impl_region_interface, NULL, NULL);
-}
-static void nuclear_impl_compositor_delete_surface(struct wl_resource *resource)
-{
-	
-}
-
 // wl surface
 static void nuclear_impl_surface_destroy(struct wl_client *client,
 		struct wl_resource *resource)
@@ -53,7 +19,7 @@ static void nuclear_impl_surface_attach(struct wl_client *client,
 	       int32_t y)
 {
 	printf("nuclear_surface_attach\n");
-	struct surface *surface = wl_resource_get_user_data (resource);
+	//struct surface *surface = wl_resource_get_user_data (resource);
 	//surface->buffer = buffer;
 }
 static void nuclear_impl_surface_damage(struct wl_client *client,
@@ -145,6 +111,11 @@ static struct wl_surface_interface nuclear_impl_surface_interface = {
 	&nuclear_impl_surface_set_buffer_scale,
 	&nuclear_impl_surface_damage_buffer,
 };
+void nuclear_impl_surface_bind(struct wl_client *client, void *data, uint32_t version, uint32_t id)
+{
+	struct wl_resource *resource = wl_resource_create (client, &wl_surface_interface, 1, id);
+	wl_resource_set_implementation (resource, &nuclear_impl_surface_interface, NULL, NULL);
+}
 // wl region
 static void nuclear_impl_region_destroy(struct wl_client *client,
 		struct wl_resource *resource)
@@ -175,7 +146,7 @@ static struct wl_region_interface nuclear_impl_region_interface = {
 	&nuclear_impl_region_subtract,
 };
 
-static void nuclear_impl_region_bind(struct wl_client *client, void *data, uint32_t version, uint32_t id)
+void nuclear_impl_region_bind(struct wl_client *client, void *data, uint32_t version, uint32_t id)
 {
 	//printf ("bind: compositor\n");
 	//struct wl_resource *resource = wl_resource_create (client, &wl_compositor_interface, 1, id);
@@ -184,3 +155,36 @@ static void nuclear_impl_region_bind(struct wl_client *client, void *data, uint3
 // wl shell
 // wl shell surface
 // xdg surface
+// wl compositor
+static void nuclear_impl_compositor_create_surface(struct wl_client *client,
+		       struct wl_resource *resource,
+		       uint32_t id)
+{
+	//printf("nuclear_compositor_create_surface\n");
+	//nuclear_surface *surface = calloc(1, sizeof(nuclear_surface));
+	//surface->surface = wl_resource_create (client, &wl_surface_interface, 3, id);
+	//wl_resource_set_implementation (surface->surface, &nuclear_impl_surface_interface, surface, &nuclear_impl_compositor_delete_surface);
+	//surface->client = get_client (client);
+	//wl_list_insert (&surfaces, &surface->link);
+}
+static void nuclear_impl_compositor_create_region(struct wl_client *client,
+		      struct wl_resource *resource,
+		      uint32_t id)
+{
+	printf("nuclear_compositor_create_region\n");
+	struct wl_resource *region = wl_resource_create (client, &wl_region_interface, 1, id);
+	wl_resource_set_implementation (region, &nuclear_impl_region_interface, NULL, NULL);
+}
+//static void nuclear_impl_compositor_delete_surface(struct wl_resource *resource)
+//{
+//	
+//}
+static struct wl_compositor_interface nuclear_impl_compositor_interface = {
+	&nuclear_impl_compositor_create_surface,
+	&nuclear_impl_compositor_create_region,
+};
+void nuclear_impl_compositor_bind(struct wl_client *client, void *data, uint32_t version, uint32_t id)
+{
+	struct wl_resource *resource = wl_resource_create (client, &wl_compositor_interface, 1, id);
+	wl_resource_set_implementation (resource, &nuclear_impl_compositor_interface, NULL, NULL);
+}
