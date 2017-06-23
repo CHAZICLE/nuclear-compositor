@@ -117,7 +117,6 @@ void handle_key_event (nuclear_server *srv, int key, int state) {
 float vax = 1.f;
 void do_backend_render(nuclear_server *srv)
 {
-	fprintf(stderr, "do_backend_render\n");
 	nuclear_universe *unv = srv->active_universe;
 	ADDCTL(right,add,right)
 	ADDCTL(left,sub,right)

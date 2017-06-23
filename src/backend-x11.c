@@ -22,9 +22,7 @@
 
 static struct {
 	Window window;
-	EGLContext egl_context;
-	EGLSurface egl_surface;
-	EGLDisplay egl_display;
+	struct backend_egl_state egl_state;
 } window;
 static Display *x_display;
 static struct backend_callbacks callbacks;
@@ -33,24 +31,35 @@ static int32_t keyboard_device_id;
 static struct xkb_keymap *keymap;
 static struct xkb_state *state;
 
-static void create_egl_window(void)
+void backend_init(struct backend_callbacks *_callbacks, nuclear_server *srv)
 {
-	print_eglversion(EGL_NO_DISPLAY);
+	struct backend_egl_state *egl_state = &window.egl_state;
+	callbacks = *_callbacks;
+	callbacks.srv = srv;
+	x_display = XOpenDisplay(NULL);
+	
+	xcb_connection = XGetXCBConnection(x_display);
+	struct xkb_context *context = xkb_context_new (XKB_CONTEXT_NO_FLAGS);
+	xkb_x11_setup_xkb_extension (xcb_connection, XKB_X11_MIN_MAJOR_XKB_VERSION, XKB_X11_MIN_MINOR_XKB_VERSION, 0, NULL, NULL, NULL, NULL);
+	keyboard_device_id = xkb_x11_get_core_keyboard_device_id(xcb_connection);
+	keymap = xkb_x11_keymap_new_from_device (context, xcb_connection, keyboard_device_id, XKB_KEYMAP_COMPILE_NO_FLAGS);
+	state = xkb_x11_state_new_from_device (keymap, xcb_connection, keyboard_device_id);
 
-	//window.egl_display = eglGetDisplay(x_display);
-	window.egl_display = eglGetPlatformDisplay(EGL_PLATFORM_X11_EXT, x_display, NULL);
-	if(window.egl_display==EGL_NO_DISPLAY)
-	{
-		fprintf(stderr, "NO DISPLAY\n");
-		exit(1);
-	}
+	window.egl_state.display = eglGetDisplay(x_display);
+	backend_setup_egl(egl_state);
+}
+Cursor cursor;
+void backend_setup_egl(struct backend_egl_state *egl_state)
+{
+	// Init EGL
+	print_eglversion(EGL_NO_DISPLAY);
 	EGLint major,minor;
-	if(eglInitialize(window.egl_display, &major, &minor)!=EGL_TRUE)
+	if(eglInitialize(egl_state->display, &major, &minor)!=EGL_TRUE)
 	{
 		print_eglerror("EGL init failed");
 		exit(1);
 	}
-	print_eglversion(window.egl_display);
+	print_eglversion(egl_state->display);
 
 	// Setup EGL
 	EGLint egl_attribs[] = {
@@ -62,7 +71,7 @@ static void create_egl_window(void)
 	};
 	EGLConfig egl_config;
 	EGLint num_configs_returned;
-	if(eglChooseConfig(window.egl_display, egl_attribs, &egl_config, 1, &num_configs_returned)!=GL_TRUE)
+	if(eglChooseConfig(egl_state->display, egl_attribs, &egl_config, 1, &num_configs_returned)!=GL_TRUE)
 	{
 		print_eglerror("eglChooseConfig failed");
 		exit(1);
@@ -70,7 +79,7 @@ static void create_egl_window(void)
 
 	// Get the visual from the EGL config
 	EGLint visual_id;
-	if(eglGetConfigAttrib(window.egl_display, egl_config, EGL_NATIVE_VISUAL_ID, &visual_id)!=GL_TRUE)
+	if(eglGetConfigAttrib(egl_state->display, egl_config, EGL_NATIVE_VISUAL_ID, &visual_id)!=GL_TRUE)
 	{
 		print_eglerror("eglGetConfigAttrib failed");
 		exit(1);
@@ -111,61 +120,54 @@ static void create_egl_window(void)
 		print_eglerror("Failed to bind api");
 		exit(1);
 	}
-	window.egl_context = eglCreateContext(window.egl_display, egl_config, EGL_NO_CONTEXT, eglContextAttribs);
-	if(window.egl_context==EGL_NO_CONTEXT)
+	egl_state->context = eglCreateContext(egl_state->display, egl_config, EGL_NO_CONTEXT, eglContextAttribs);
+	if(egl_state->context==EGL_NO_CONTEXT)
 	{
 		print_eglerror("eglCreateContext failed");
 		exit(1);
 	}
-	window.egl_surface = eglCreateWindowSurface(window.egl_display, egl_config, window.window, NULL);
-	if(window.egl_surface==EGL_NO_SURFACE)
+	egl_state->surface = eglCreateWindowSurface(egl_state->display, egl_config, window.window, NULL);
+	if(egl_state->surface==EGL_NO_SURFACE)
 	{
 		print_eglerror("eglCreateWindowSurface failed");
 		exit(1);
 	}
-	if(eglMakeCurrent(window.egl_display, window.egl_surface, window.egl_surface, window.egl_context)!=GL_TRUE)
-	{
-		print_eglerror("eglMakeCurrent failed");
-		exit(1);
-	}
+	backend_make_current();
+
 
 	XFree(visual);
 	XMapWindow (x_display, window.window);
-
 	fprintf(stderr, "GL Version: %s\n", glGetString(GL_VERSION));
 
-	Cursor cursor;
 	XcursorImage* native = XcursorImageCreate(16, 16);
-	memset(native->pixels, 16*16, sizeof(unsigned int));
+	native->xhot = 0;
+	native->yhot = 0;
+	memset(native->pixels, 16*16*4, sizeof(unsigned char));
 	cursor = XcursorImageLoadCursor(x_display, native);
 	XcursorImageDestroy(native);
 
 	XDefineCursor(x_display, window.window, cursor);
+	XFlush(x_display);
 }
 
-void backend_init (struct backend_callbacks *_callbacks, nuclear_server *srv) {
-	callbacks = *_callbacks;
-	callbacks.srv = srv;
-	x_display = XOpenDisplay (NULL);
-	
-	xcb_connection = XGetXCBConnection (x_display);
-	struct xkb_context *context = xkb_context_new (XKB_CONTEXT_NO_FLAGS);
-	xkb_x11_setup_xkb_extension (xcb_connection, XKB_X11_MIN_MAJOR_XKB_VERSION, XKB_X11_MIN_MINOR_XKB_VERSION, 0, NULL, NULL, NULL, NULL);
-	keyboard_device_id = xkb_x11_get_core_keyboard_device_id (xcb_connection);
-	keymap = xkb_x11_keymap_new_from_device (context, xcb_connection, keyboard_device_id, XKB_KEYMAP_COMPILE_NO_FLAGS);
-	state = xkb_x11_state_new_from_device (keymap, xcb_connection, keyboard_device_id);
-	
-	create_egl_window();
-}
-
-EGLDisplay backend_get_egl_display (void)
+void backend_make_current()
 {
-	return window.egl_display;
+	struct backend_egl_state *egl_state = &window.egl_state;
+	if(eglMakeCurrent(egl_state->display, egl_state->surface, egl_state->surface, egl_state->context)!=GL_TRUE)
+	{
+		print_eglerror("eglMakeCurrent failed");
+		exit(1);
+	}
+}
+
+struct backend_egl_state *backend_get_egl()
+{
+	return &window.egl_state;
 }
 
 void backend_swap_buffers (void)
 {
-	eglSwapBuffers(window.egl_display, window.egl_surface);
+	eglSwapBuffers(window.egl_state.display, window.egl_state.surface);
 }
 
 static void update_modifiers (void) {

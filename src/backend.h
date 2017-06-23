@@ -16,12 +16,20 @@ struct backend_callbacks
 	void (*render) (nuclear_server *srv);
 };
 
+struct backend_egl_state {
+	EGLDisplay display;
+	EGLContext context;
+	EGLSurface surface;
+};
+
 void backend_init(struct backend_callbacks *callbacks, nuclear_server *srv);
-EGLDisplay backend_get_egl_display (void);
-void backend_swap_buffers (void);
-void backend_dispatch_nonblocking (void);
+void backend_setup_egl(struct backend_egl_state *egl_state);
+struct backend_egl_state *backend_get_egl();
+void backend_make_current();
+void backend_swap_buffers();
+void backend_dispatch_nonblocking ();
 void backend_wait_for_events (int wayland_fd);
-void backend_get_keymap (int *fd, int *size);
-long backend_get_timestamp (void);
+void backend_get_keymap(int *fd, int *size);
+long backend_get_timestamp();
 
 #endif

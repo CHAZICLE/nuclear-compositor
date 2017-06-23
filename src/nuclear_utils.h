@@ -8,8 +8,8 @@
 #include <stdio.h>
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
-#include <GLES3/gl3.h>
-#include <GLES3/gl3ext.h>
+#include <GLES2/gl2.h>
+#include <GLES2/gl2ext.h>
 
 #define radians(r) ((r)/(180.f/3.14159f))
 #define degrees(r) ((r)*(180.f/3.14159f))

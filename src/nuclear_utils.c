@@ -19,7 +19,7 @@ void init_egl()
 
 void print_eglversion(EGLDisplay display)
 {
-	fprintf(stderr, "print_eglversion (%d):\n\tEGL_CLIENT_APIS: %s\n", display, eglQueryString(display, EGL_CLIENT_APIS));
+	fprintf(stderr, "print_eglversion (%p):\n\tEGL_CLIENT_APIS: %s\n", display, eglQueryString(display, EGL_CLIENT_APIS));
 	fprintf(stderr, "\tEGL_VENDOR: %s\n", eglQueryString(display, EGL_VENDOR));
 	fprintf(stderr, "\tEGL_VERSION: %s\n", eglQueryString(display, EGL_VERSION));
 	fprintf(stderr, "\tEGL_EXTENSIONS: %s\n\n", eglQueryString(display, EGL_EXTENSIONS));

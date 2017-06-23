@@ -2,6 +2,7 @@
 #include <string.h>
 #include "backend.h"
 #include "nuclear_utils.h"
+#include <stdlib.h>
 
 #include "nuclear_atom.h"
 

@@ -8,7 +8,6 @@
 #define LEVEL_RESOLUTION_HORZ 180
 #define LEVEL_RESOLUTION_VERT 360
 
-GLuint vertexArrayId;
 GLuint levelVertexBuffer;
 GLuint levelTriangleIndexBuffer;
 GLuint levelLineIndexBuffer;
@@ -35,9 +34,6 @@ void nuclear_level_preinit()
 	//}
 	sphere = create_icosphere(2);
 
-	glGenVertexArrays(1, &vertexArrayId);
-	glBindVertexArray(vertexArrayId);
-
 	glGenBuffers(1, &levelVertexBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, levelVertexBuffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*sphere->vertices*3, sphere->vertexPositionBuffer, GL_STATIC_DRAW);
@@ -63,15 +59,14 @@ void nuclear_level_init(nuclear_level *lvl, nuclear_atom *atm, float radius)
 void nuclear_level_render(nuclear_level *lvl, mat4x4 atomMatrix)
 {
 	glUseProgram(progId);
-	glBindVertexArray(vertexArrayId);
 
 	mat4x4 levelMatrix;
 	mat4x4_scale_aniso(levelMatrix, atomMatrix, lvl->radius, lvl->radius, lvl->radius);
 
 	glUniformMatrix4fv(mvpId, 1, GL_FALSE, &levelMatrix[0][0]);
 
-	glEnableVertexAttribArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, levelVertexBuffer);
+	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(
 			0,                  // attribute. No particular reason for 0, but must match the layout in the shader.
 			3,                  // size
