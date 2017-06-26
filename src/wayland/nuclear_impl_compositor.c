@@ -1,7 +1,7 @@
 #include <wayland-server.h>
 #include <stdio.h>
 #include "main.h"
-#include "nuclear_surface.h"
+#include "common/nuclear_surface.h"
 
 #include "nuclear_impl_compositor.h"
 

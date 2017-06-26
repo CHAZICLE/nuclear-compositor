@@ -13,7 +13,7 @@ CCBINDIR=$(BINDIR)
 CCDEPDIR=$(DEPDIR)
 
 CC=gcc
-CFLAGS=-g -Wall -fdiagnostics-color -I include/linmath.h
+CFLAGS=-g -Wall -fdiagnostics-color -Isrc -I include/linmath.h
 LDFLAGS=-DOSVR_RM_USE_OPENGLES20=1 -lwayland-server -lX11 -lXcursor -lX11-xcb -lGLESv2 -lEGL -lxkbcommon-x11 -lxkbcommon -lm -losvrClientKit -losvrRenderManager
 CCBIN=nuclear-compositor
 

@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include "nuclear_surface.h"
+#include "common/nuclear_surface.h"
 #include "main.h"
 
 // wl_pointer

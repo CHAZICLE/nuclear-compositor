@@ -6,27 +6,17 @@ typedef struct _nuclear_universe nuclear_universe;
 #include "nuclear_server.h"
 #include "nuclear_atom.h"
 #define OSVR_RM_USE_OPENGLES20
-#include <osvr/RenderKit/RenderManagerOpenGLC.h>
 
 #include <wayland-server.h>
 
 struct _nuclear_universe {
 	nuclear_server *server;
-	nuclear_atom *active_atom;
-	vec3 floating_position;
 	struct wl_list atoms;
 
-	float yaw; // 0 to 360
-	float pitch; // -90 to 90
-
-	struct wl_list link;
+	struct wl_list next;
 };
 
-void nuclear_universe_preinit();
 void nuclear_universe_init(nuclear_universe *unv, nuclear_server *srv);
-void nuclear_universe_osvrRender_render(nuclear_universe *unv);
-void nuclear_universe_osvrRender_renderEye(nuclear_universe *unv, OSVR_RenderInfoOpenGL *renderInfo, GLuint bufferName);
-void nuclear_universe_render(nuclear_universe *unv, mat4x4 projectionMatrix);
 void nuclear_universe_destroy(nuclear_universe *unv);
 
 #endif

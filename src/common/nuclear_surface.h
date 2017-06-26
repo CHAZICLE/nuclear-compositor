@@ -28,7 +28,7 @@ struct _nuclear_surface {
 	struct wl_resource *frame_callback;
 	//struct texture texture;
 
-	struct wl_list link;
+	struct wl_list next;
 };
 
 void nuclear_surface_init(nuclear_surface *lvl);

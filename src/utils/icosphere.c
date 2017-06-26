@@ -118,6 +118,7 @@ static int getmidpoint(struct vertex_arraylist *vlist, struct triangle_linkedlis
 
 struct icosphere *create_icosphere(int recursion)
 {
+	fprintf(stderr, "Creating isosphere...");
 	struct icosphere *icosphere = malloc(sizeof(struct icosphere));
 
 	// initial vertex build
@@ -189,8 +190,6 @@ struct icosphere *create_icosphere(int recursion)
 	icosphere->vertexPositionBuffer = malloc(sizeof(float)*3*icosphere->vertices);
 	memcpy(icosphere->vertexPositionBuffer, vlist->data, sizeof(float)*3*icosphere->vertices);
 
-	fprintf(stderr, "Verts: %d\n", icosphere->vertices);
-
 	//tlist to linear index buffer
 	icosphere->triangles = tlist->count;
 	icosphere->triangleIndexBuffer = malloc(sizeof(unsigned int)*3*icosphere->triangles);
@@ -218,6 +217,8 @@ struct icosphere *create_icosphere(int recursion)
 	triangle_linkedlist_destroy(tlist);
 	triangle_linkedlist_destroy(midpoints);
 	vertex_arraylist_destroy(vlist);
+
+	fprintf(stderr, "DONE (%d vertices, %d lines, %d triangles)\n", icosphere->vertices, icosphere->lines, icosphere->triangles);
 
 	return icosphere;
 }

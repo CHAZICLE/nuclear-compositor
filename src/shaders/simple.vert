@@ -1,8 +1,10 @@
 #version 100
 
 attribute vec3 vertexPosition_modelspace;
-uniform mat4 MVP;
+uniform mat4 M;
+uniform mat4 V;
+uniform mat4 P;
 
 void main(){
-	gl_Position =  MVP * vec4(vertexPosition_modelspace,1);
+	gl_Position =  (P*V*M) * vec4(vertexPosition_modelspace,1);
 }

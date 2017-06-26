@@ -6,10 +6,6 @@
 
 #include "nuclear_atom.h"
 
-void nuclear_atom_preinit()
-{
-	nuclear_level_preinit();
-}
 void nuclear_atom_init(nuclear_atom *atm, nuclear_universe *unv, int x, int y, int z)
 {
 	atm->universe = unv;
@@ -22,20 +18,7 @@ void nuclear_atom_init(nuclear_atom *atm, nuclear_universe *unv, int x, int y, i
 	for(int i=0;i<1;i++)
 	{
 		nuclear_level_init(&level[i], atm, 20.f+5.f*(i+1));
-		wl_list_insert(&atm->levels, &level[i].link);
-	}
-}
-void nuclear_atom_render(nuclear_atom *atm, mat4x4 viewProjectionMatrix)
-{
-	mat4x4 modelMatrix;
-	mat4x4_translate(modelMatrix, atm->position[0], atm->position[1], atm->position[2]);
-	mat4x4 modelViewProjectionMatrix;
-	mat4x4_mul(modelViewProjectionMatrix, viewProjectionMatrix, modelMatrix);
-
-	//// Render all the levels
-	nuclear_level *level;
-	wl_list_for_each_reverse (level, &atm->levels, link) {
-		nuclear_level_render(level, modelViewProjectionMatrix);
+		wl_list_insert(&atm->levels, &level[i].next);
 	}
 }
 // void deactivate_surface (nuclear_server *srv, nuclear_surface *surface) {

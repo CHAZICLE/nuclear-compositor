@@ -33,6 +33,15 @@ void print_glversion()
 	fprintf(stderr, "\tGL_SHADING_LANGUAGE_VERSION: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
 	fprintf(stderr, "\tGL_EXTENSIONS: %s\n\n", glGetString(GL_EXTENSIONS));
 }
+void print_shaderstatus(GLint shader)
+{
+	fprintf(stderr, "print_shaderstatus:\n");
+	fprintf(stderr, "\tGL_VENDOR: %s\n", glGetString(GL_VENDOR));
+	fprintf(stderr, "\tGL_RENDERER: %s\n", glGetString(GL_RENDERER));
+	fprintf(stderr, "\tGL_VERSION: %s\n", glGetString(GL_VERSION));
+	fprintf(stderr, "\tGL_SHADING_LANGUAGE_VERSION: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
+	fprintf(stderr, "\tGL_EXTENSIONS: %s\n\n", glGetString(GL_EXTENSIONS));
+}
 void print_eglerror(const char *err)
 {
 	switch(eglGetError())
@@ -89,9 +98,11 @@ GLuint load_shader(GLint type, const char *shader_path)
 	fclose(fs);
 
 
+	fprintf(stderr, "Shader %s status:\n", shader_path);
 #define getGLiv(pname) \
 	GLint result_##pname; \
-	glGetShaderiv(shaderId, pname, &result_##pname);
+	glGetShaderiv(shaderId, pname, &result_##pname); \
+	fprintf(stderr, "\t" #pname ": %d\n", result_##pname);
 	getGLiv(GL_SHADER_TYPE		)
 	getGLiv(GL_DELETE_STATUS	)
 	getGLiv(GL_COMPILE_STATUS	)
@@ -111,15 +122,6 @@ GLuint load_shader(GLint type, const char *shader_path)
 			fprintf(stderr, "Failed to compile shader %s: \n%s\n", shader_path, shader_code);
 		exit(2);
 	}
-	fprintf(stderr, "Shader %s status:\n", shader_path);
-#define getGLiv(pname) \
-	fprintf(stderr, "\t" #pname ": %d\n", result_##pname);
-	getGLiv(GL_SHADER_TYPE		)
-	getGLiv(GL_DELETE_STATUS	)
-	getGLiv(GL_COMPILE_STATUS	)
-	getGLiv(GL_INFO_LOG_LENGTH	)
-	getGLiv(GL_SHADER_SOURCE_LENGTH	)
-#undef getGLiv
 
 	free(shader_code);
 
@@ -127,31 +129,40 @@ GLuint load_shader(GLint type, const char *shader_path)
 }
 GLuint loadShaders(const char *vertexShaderName, const char *fragmentShaderName)
 {
-	GLuint VertexShaderID = load_shader(GL_VERTEX_SHADER, vertexShaderName);
-	GLuint FragmentShaderID = load_shader(GL_FRAGMENT_SHADER, fragmentShaderName);
+	GLuint vertexShaderId = load_shader(GL_VERTEX_SHADER, vertexShaderName);
+	GLuint fragmentShaderId = load_shader(GL_FRAGMENT_SHADER, fragmentShaderName);
 
-	GLuint ProgramID = glCreateProgram();
-	glAttachShader(ProgramID, VertexShaderID);
-	glAttachShader(ProgramID, FragmentShaderID);
-	glLinkProgram(ProgramID);
-	//glDetachShader(ProgramID, VertexShaderID);
-	//glDetachShader(ProgramID, FragmentShaderID);
-	//glDeleteShader(VertexShaderID);
-	//glDeleteShader(FragmentShaderID);
+	GLuint programId = glCreateProgram();
+	glAttachShader(programId, vertexShaderId);
+	glAttachShader(programId, fragmentShaderId);
+	glLinkProgram(programId);
+	glDetachShader(programId, vertexShaderId);
+	glDetachShader(programId, fragmentShaderId);
+	glDeleteShader(vertexShaderId);
+	glDeleteShader(fragmentShaderId);
 
-	GLint Result = GL_FALSE;
-	int InfoLogLength;
+	fprintf(stderr, "Program (%s %s) status:\n", vertexShaderName, fragmentShaderName);
+#define getGLiv(pname) \
+	GLint result_##pname; \
+	glGetProgramiv(programId, pname, &result_##pname); \
+	fprintf(stderr, "\t" #pname ": %d\n", result_##pname);
+	getGLiv(GL_DELETE_STATUS		)
+	getGLiv(GL_LINK_STATUS			)
+	getGLiv(GL_VALIDATE_STATUS		)
+	getGLiv(GL_INFO_LOG_LENGTH		)
+	getGLiv(GL_ATTACHED_SHADERS		)
+	getGLiv(GL_ACTIVE_ATTRIBUTES		)
+	getGLiv(GL_ACTIVE_ATTRIBUTE_MAX_LENGTH	)
+	getGLiv(GL_ACTIVE_UNIFORMS		)
+	getGLiv(GL_ACTIVE_UNIFORM_MAX_LENGTH	)
+#undef getGLiv
 
-	glGetProgramiv(ProgramID, GL_LINK_STATUS, &Result);
-	glGetProgramiv(ProgramID, GL_INFO_LOG_LENGTH, &InfoLogLength);
-	if ( InfoLogLength > 0 ){
-		char *err = malloc(InfoLogLength+1);
-		glGetProgramInfoLog(ProgramID, InfoLogLength, NULL, &err[0]);
+	if(result_GL_INFO_LOG_LENGTH>0){
+		char *err = malloc(result_GL_INFO_LOG_LENGTH+1);
+		glGetProgramInfoLog(programId, result_GL_INFO_LOG_LENGTH, NULL, &err[0]);
 		fprintf(stderr, "Failed to link shader program (%s, %s): %s\n", vertexShaderName, fragmentShaderName, err);
 		exit(1);
 	}
-	if(!Result)
-		exit(2);
 
-	return ProgramID;
+	return programId;
 }
